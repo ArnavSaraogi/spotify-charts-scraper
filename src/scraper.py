@@ -6,7 +6,6 @@ import time
 import json
 import os
 from tqdm import tqdm
-import random
 
 def write_to_json(charts, file_path):
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -25,9 +24,14 @@ def scrape(country, start, end, top_n, filename, save_interval=10, max_retries=4
     file_path = f"data/{filename}"
     
     if os.path.isfile(file_path):
-        print(f"deleting existing file: {file_path}")
-        os.remove(file_path)
-    
+        response = input(f"File {file_path} already exists. Delete it? (y/n): ").strip().lower()
+        if response == "y":
+            print(f"Deleting existing file: {file_path}")
+            os.remove(file_path)
+        else:
+            print("Keeping existing file. Exiting scrape.")
+            return 
+
     token = get_bearer_token()
     charts = {}
     day_counter = 0
@@ -62,7 +66,6 @@ def scrape(country, start, end, top_n, filename, save_interval=10, max_retries=4
             day_counter = 0
 
         curr += timedelta(days=1)
-        #time.sleep(random.uniform(3, 6))
         time.sleep(3)
 
     if charts:
