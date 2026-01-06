@@ -1,22 +1,68 @@
-from src.scraper import scrape
+from src.scraper import scrape, scrape_update
 
 from countries import countries
 from config import config
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+import os
 
 DATE_FLOOR = date(2017, 1, 1)
-DATE_CEILING = date.today()
+DATE_CEILING = date.today() - timedelta(days=1) # latest chart on Spotify will always be at most yesterday
 
 def main():
+    # validate filename
+    filename = config.get("filename")
+    if not isinstance(filename, str) or not filename.lower().endswith(".json"):
+        print("filename must be a string ending with .json")
+        return
+    
+    # //* UPDATE MODE *//
+
+    # check if update is True
+    if config["update"]:
+        file_path = f"data/{filename}"
+        if not os.path.isfile(file_path):
+            print(f"Cannot update: {file_path} does not exist")
+            return
+        
+        if config["update_to"] == "today":
+            update_to = DATE_CEILING
+        else:
+            try:
+                update_to = datetime.strptime(config["update_to"], "%Y-%m-%d").date()
+            except ValueError:
+                print("update_to must be 'today' or in YYYY-MM-DD format")
+                return
+        
+        if update_to > DATE_CEILING:
+            print(f"Changed update_to to latest available date: {DATE_CEILING}")
+            update_to = DATE_CEILING
+        scrape_update(update_to, filename)
+        return
+    
+    # //* NORMAL MODE *//
+
     # validate country
     if config["country"] not in countries:
         print("Country not found. See countries.py for available countries")
         return
 
     # validate dates
-    start = datetime.strptime(config["start_date"], "%Y-%m-%d").date()
-    end = datetime.strptime(config["end_date"], "%Y-%m-%d").date()
+    try:
+        start = datetime.strptime(config["start_date"], "%Y-%m-%d").date()
+    except ValueError:
+        print("start_date must be in YYYY-MM-DD format")
+        return
+    
+    try:
+        end = datetime.strptime(config["end_date"], "%Y-%m-%d").date()
+    except ValueError:
+        print("end_date must be in YYYY-MM-DD format")
+        return
+
+    if start > end:
+        print("start_date must be earlier than or equal to end_date")
+        return
 
     if start < DATE_FLOOR:
         print(f"Changed start to earliest available date: {DATE_FLOOR}")
@@ -30,15 +76,6 @@ def main():
         print("top_n must be between 1 and 200")
         return
     
-    country_code = countries[config["country"]]
-    top_n = config["top_n"]
-
-    # validate filename
-    filename = config.get("filename")
-    if not isinstance(filename, str) or not filename.lower().endswith(".json"):
-        print("filename must be a string ending with .json")
-        return
-
     country_code = countries[config["country"]]
     top_n = config["top_n"]
 
