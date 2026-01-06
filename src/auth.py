@@ -15,7 +15,7 @@ def get_bearer_token():
             context.add_cookies(json.loads(COOKIE_FILE.read_text()))
             print("loaded existing cookies")
         else:
-            print("No cookies found. Please log in manually in the opened browser.")
+            print("no cookies found, log in manually in the opened browser.")
         
         page = context.new_page()
         token = None
@@ -31,8 +31,18 @@ def get_bearer_token():
         # First go to main Spotify to establish session
         page.goto("https://open.spotify.com/", wait_until="networkidle")
         
+        # Check if cookies are valid (if they were loaded)
+        if COOKIE_FILE.exists():
+            try:
+                page.wait_for_selector("button[data-testid='user-widget-link']", timeout=5000)
+            except:
+                # Cookies are expired
+                browser.close()
+                COOKIE_FILE.unlink()
+                print("Cookies expired. Retrying with login...")
+                return get_bearer_token()
+        
         if not COOKIE_FILE.exists():
-            print("Waiting for you to log in to Spotify...")
             try:
                 page.wait_for_selector("button[data-testid='user-widget-link']", timeout=300000)
                 print("Login detected")
