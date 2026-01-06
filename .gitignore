@@ -1,0 +1,5 @@
+venv
+curl.sh
+data/
+__pycache__/
+cookies.json
