@@ -1,5 +1,6 @@
 import requests
 import time
+import random
 
 class UnauthorizedError(Exception):
     pass
@@ -11,7 +12,6 @@ class TooManyRequestsError(Exception):
     pass
 
 BASE_URL = "https://charts-spotify-com-service.spotify.com/auth/v0/charts"
-SLEEP_TIME = 3
 
 HEADERS_TEMPLATE = {
     "Accept": "application/json",
@@ -48,7 +48,7 @@ def fetch_chart(date_str, token, latest_date_str, region="us"):
 
     r.raise_for_status()
 
-    time.sleep(SLEEP_TIME)
+    time.sleep(random.uniform(4, 5))
     return r.json()["entries"]
 
 def fetch_latest_date(token, region="us"):
@@ -70,5 +70,5 @@ def fetch_latest_date(token, region="us"):
 
     r.raise_for_status()
 
-    time.sleep(SLEEP_TIME)
+    time.sleep(random.uniform(4, 5))
     return r.json()["displayChart"]["date"]

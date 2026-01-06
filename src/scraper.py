@@ -72,7 +72,6 @@ def scrape(country, start, end, top_n, filename, save_interval=10, max_retries=4
             day_counter = 0
 
         curr += timedelta(days=1)
-        # time.sleep(3)
 
     if charts["charts"]:
         write_to_json(charts, file_path)
@@ -138,7 +137,6 @@ def scrape_update(update_to, filename,
             day_counter = 0
 
         curr += timedelta(days=1)
-        # time.sleep(3)
 
     if charts["charts"]:
         write_to_json(charts, file_path)
