@@ -41,6 +41,16 @@ def main():
         return
     
     # //* NORMAL MODE *//
+    
+    file_path = f"data/{filename}"
+    if os.path.isfile(file_path):
+        response = input(f"File {file_path} already exists. Delete it? (y/n): ").strip().lower()
+        if response == "y":
+            print(f"Deleting existing file: {file_path}")
+            os.remove(file_path)
+        else:
+            print("Keeping existing file. Exiting scrape.")
+            return 
 
     # validate country
     if config["country"] not in countries:

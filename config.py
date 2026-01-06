@@ -10,10 +10,10 @@ The fields country, start_date, end_date, and top_n are ignored.
 
 config = {
     "country": "USA",
-    "start_date": "2025-01-01",
-    "end_date": "2025-01-3",
+    "start_date": "2026-01-01",
+    "end_date": "2026-01-3",
     "top_n": 3,
     "filename": "charts.json",
     "update": True,
-    "update_to": "2025-01-15"
+    "update_to": "today"
 }
