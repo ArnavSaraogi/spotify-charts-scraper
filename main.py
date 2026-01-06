@@ -64,11 +64,14 @@ def main():
         print("start_date must be in YYYY-MM-DD format")
         return
     
-    try:
-        end = datetime.strptime(config["end_date"], "%Y-%m-%d").date()
-    except ValueError:
-        print("end_date must be in YYYY-MM-DD format")
-        return
+    if config["end_date"] == "today":
+        end = DATE_CEILING
+    else:
+        try:
+            end = datetime.strptime(config["end_date"], "%Y-%m-%d").date()
+        except ValueError:
+            print("end_date must be in YYYY-MM-DD format")
+            return
 
     if start > end:
         print("start_date must be earlier than or equal to end_date")
