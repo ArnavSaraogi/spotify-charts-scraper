@@ -31,12 +31,12 @@ def scrape(country, start, end, top_n, filename, save_interval=10, max_retries=4
     token = get_bearer_token()
     latest_date_str = fetch_latest_date(token, country)
     end = min(end, datetime.strptime(latest_date_str, "%Y-%m-%d").date())
-    
+
     charts = {
         "metadata": {
             "country": country,
             "start_date": start.strftime("%Y-%m-%d"),
-            "end_date": end.strftime("%Y-%m-%d"),
+            "end_date": start.strftime("%Y-%m-%d"),
             "top_n": top_n,
         },
         "charts": {}
@@ -45,6 +45,7 @@ def scrape(country, start, end, top_n, filename, save_interval=10, max_retries=4
     day_counter = 0
     total_days = (end - start).days + 1
     curr = start
+    last_written_date = None
 
     for _ in tqdm(range(total_days), desc=f"Scraping {country}", unit="day"):
         curr_str = curr.strftime("%Y-%m-%d")
@@ -52,6 +53,7 @@ def scrape(country, start, end, top_n, filename, save_interval=10, max_retries=4
         for attempt in range(max_retries):
             try:
                 charts["charts"][curr_str] = fetch_chart(curr_str, token, latest_date_str, country)[:top_n]
+                last_written_date = curr_str
                 break
             except UnauthorizedError as e:
                 print(e)
@@ -67,21 +69,20 @@ def scrape(country, start, end, top_n, filename, save_interval=10, max_retries=4
         day_counter += 1
 
         if day_counter >= save_interval:
+            if last_written_date:
+                charts["metadata"]["end_date"] = last_written_date
             write_to_json(charts, file_path)
-            charts["charts"] = {}   # keep metadata, clear only daily charts
+            charts["charts"] = {}
             day_counter = 0
 
         curr += timedelta(days=1)
 
     if charts["charts"]:
+        if last_written_date:
+            charts["metadata"]["end_date"] = last_written_date
         write_to_json(charts, file_path)
 
-def scrape_update(update_to, filename,
-                  save_interval=10,
-                  max_retries=4,
-                  base_delay=120,
-                  max_delay=600):
-
+def scrape_update(update_to, filename, save_interval=10, max_retries=4, base_delay=120, max_delay=600):
     file_path = f"data/{filename}"
     token = get_bearer_token()
 
@@ -96,7 +97,6 @@ def scrape_update(update_to, filename,
     update_to = min(update_to, datetime.strptime(latest_date_str, "%Y-%m-%d").date())
 
     top_n = metadata["top_n"]
-
     curr = datetime.strptime(metadata["end_date"], "%Y-%m-%d").date() + timedelta(days=1)
 
     if curr > update_to:
@@ -104,14 +104,13 @@ def scrape_update(update_to, filename,
         return
 
     charts = {
-        "metadata": {
-            "end_date": update_to.strftime("%Y-%m-%d")
-        },
+        "metadata": {},
         "charts": {}
     }
 
     total_days = (update_to - curr).days + 1
     day_counter = 0
+    last_written_date = None
 
     for _ in tqdm(range(total_days), desc=f"Updating {country}", unit="day"):
         curr_str = curr.strftime("%Y-%m-%d")
@@ -119,19 +118,23 @@ def scrape_update(update_to, filename,
         for attempt in range(max_retries):
             try:
                 charts["charts"][curr_str] = fetch_chart(curr_str, token, latest_date_str, country)[:top_n]
+                last_written_date = curr_str
                 break
             except UnauthorizedError:
+                print("Unauthorized, fetching new token...")
                 token = get_bearer_token()
             except TooManyRequestsError as e:
                 delay = min(base_delay * (2 ** attempt), max_delay)
-                print(f"{e} — retrying in {delay}s")
+                print(f"{e} — retrying in {delay}s (attempt {attempt+1}/{max_retries})")
                 time.sleep(delay)
         else:
-            raise RuntimeError(f"Failed to fetch {curr_str}")
+            raise RuntimeError(f"Failed to fetch {curr_str} after {max_retries} attempts.")
 
         day_counter += 1
 
         if day_counter >= save_interval:
+            if last_written_date:
+                charts["metadata"]["end_date"] = last_written_date
             write_to_json(charts, file_path)
             charts["charts"] = {}
             day_counter = 0
@@ -139,4 +142,6 @@ def scrape_update(update_to, filename,
         curr += timedelta(days=1)
 
     if charts["charts"]:
+        if last_written_date:
+            charts["metadata"]["end_date"] = last_written_date
         write_to_json(charts, file_path)
