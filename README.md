@@ -1,7 +1,7 @@
 # spotify-charts-scraper
 
 ## Overview
-This project scrapes Spotify Charts for Spotify's Daily Top Songs in all their supported regions. The scraper creates a JSON file with chart data from Spotify's internal API for each day specified.
+This project scrapes Spotify Charts for Spotify's Daily Top Songs in all their supported regions. The scraper creates a JSON file with chart data from Spotify's internal API for each day specified. Attached in releases, there's a [dataset](https://github.com/ArnavSaraogi/spotify-charts-scraper/releases/tag/spotify_dataset) of the top 20 streamed songs in the US on Spotify for each day from January 1, 2017 to January 5, 2026, scraped from Spotify's internal API.
 
 ## Usage
 ### Download and Setup
